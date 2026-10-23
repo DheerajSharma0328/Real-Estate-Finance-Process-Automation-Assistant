@@ -1,0 +1,3 @@
+payment_id,invoice_id,property_id,project_id,vendor_id,payment_date,amount,payment_reference,payment_status
+PAY8001,INV5002,P204,PR204,V302,2026-09-05,125000,UTR-8001,Completed
+PAY8002,INV5005,P205,PR205,V305,2026-09-06,350000,UTR-8002,Completed

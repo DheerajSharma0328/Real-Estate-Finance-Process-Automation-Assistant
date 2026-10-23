@@ -1,0 +1,13 @@
+Document ID: DOC-DISPUTE-5004
+Invoice ID: INV5004
+PO ID: PO7004
+Project ID: PR204
+Property ID: P204
+Vendor ID: V304
+Cost Code: CC404
+Document Type: Reconciliation Note
+Document Date: 2026-09-02
+
+Invoice INV5004 is currently on hold. The invoice amount is INR 190,000 while PO7004 is INR 180,000.
+The finance team requested a revised invoice or written approval for the INR 10,000 variance.
+No payment should be released until the discrepancy is resolved.

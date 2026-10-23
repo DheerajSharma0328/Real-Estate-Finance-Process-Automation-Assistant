@@ -1,0 +1,51 @@
+BENCHMARK QUESTIONS — PROJECT 3
+
+1. STRUCTURED ONLY
+Which invoices are unpaid for Project PR204?
+Expected: INV5001, INV5003, INV5004, INV5008. INV5002 is partially paid.
+
+2. STRUCTURED ONLY
+Which PR204 invoices have invoice amounts greater than their PO amounts?
+Expected:
+INV5001: 485,000 vs 450,000
+INV5002: 275,000 vs 250,000
+INV5004: 190,000 vs 180,000
+INV5008: 160,000 vs 150,000
+
+3. DOCUMENT ONLY
+What does the finance procedure require before invoice approval?
+Expected: vendor/project confirmation, PO match, cost-code/budget check, required supporting approvals/documents,
+payment status, and escalation of mismatches.
+
+4. STRUCTURED + UNSTRUCTURED
+What does the approval document say about disputed/conditional invoice INV5003?
+Expected: INR 420,000 advance is approved against PO7003, subject to signed advance-payment form and vendor tax documentation.
+
+5. STRUCTURED + UNSTRUCTURED
+Which documents are missing before INV5003 can proceed?
+Expected: signed advance-payment form and vendor tax documentation, based on the approval email/contract evidence.
+
+6. RECONCILIATION
+Explain the evidence behind the PR204 reconciliation result.
+Must link invoice/PO values with DOC-RECON-PR204 and the individual invoice/reconciliation documents.
+
+7. MULTI-HOP
+Trace P204 -> PR204 -> INV5004 -> PO7004 -> V304 -> DOC-DISPUTE-5004.
+Explain why payment is on hold.
+Expected: invoice exceeds PO by INR 10,000 and written approval/revised invoice is required.
+
+8. BUDGET
+Which PR204 cost codes are above budget?
+Expected: CC101 by INR 70,000 and CC404 by INR 15,000.
+
+9. EVIDENCE ISOLATION
+Can DOC-UNRELATED-206 be used to answer a PR204 invoice question?
+Expected: No; it belongs to PR206.
+
+10. UNSUPPORTED
+Which invoice will definitely be paid tomorrow?
+Expected: reject; available evidence cannot guarantee future payment timing.
+
+11. NO-EVIDENCE
+What was the exact reason a vendor delayed a payment if no supporting document exists?
+Expected: do not invent a reason; report insufficient evidence.

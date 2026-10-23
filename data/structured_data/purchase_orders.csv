@@ -1,0 +1,9 @@
+po_id,property_id,project_id,vendor_id,po_date,cost_code,description,po_quantity,po_unit_rate,po_total,approval_status
+PO7001,P204,PR204,V301,2026-08-10,CC101,Cement and concrete supplies,1000,450,450000,Approved
+PO7002,P204,PR204,V302,2026-08-12,CC202,Electrical cabling,5000,50,250000,Approved
+PO7003,P204,PR204,V303,2026-08-14,CC303,HVAC installation advance,1,420000,420000,Approved
+PO7004,P204,PR204,V304,2026-08-16,CC404,Flooring materials,1000,180,180000,Approved
+PO7005,P205,PR205,V305,2026-08-18,CC101,Civil works,1,350000,350000,Approved
+PO7006,P205,PR205,V301,2026-08-20,CC101,Concrete supplies,500,420,210000,Approved
+PO7007,P206,PR206,V304,2026-08-05,CC404,Flooring materials,800,175,140000,Approved
+PO7008,P204,PR204,V301,2026-08-30,CC101,Concrete supplies - additional delivery,300,500,150000,Approved

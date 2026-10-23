@@ -1,0 +1,12 @@
+Document ID: DOC-INV5001
+Invoice ID: INV5001
+PO ID: PO7001
+Project ID: PR204
+Property ID: P204
+Vendor ID: V301
+Cost Code: CC101
+Document Type: Vendor Invoice
+Document Date: 2026-08-20
+
+Invoice for cement and concrete supplies. Invoice total stated as INR 485,000.
+Payment terms: 30 days from invoice date.

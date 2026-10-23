@@ -1,0 +1,11 @@
+Document ID: DOC-APP-5003
+Invoice ID: INV5003
+PO ID: PO7003
+Project ID: PR204
+Property ID: P204
+Vendor ID: V303
+Document Type: Approval Email
+Document Date: 2026-08-26
+
+Finance Manager approval: the HVAC installation advance of INR 420,000 is approved against PO7003,
+subject to receipt of the signed advance-payment form and vendor tax documentation.

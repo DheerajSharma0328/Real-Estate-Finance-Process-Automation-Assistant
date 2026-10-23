@@ -1,0 +1,12 @@
+Document ID: DOC-INV5002
+Invoice ID: INV5002
+PO ID: PO7002
+Project ID: PR204
+Property ID: P204
+Vendor ID: V302
+Cost Code: CC202
+Document Type: Vendor Invoice
+Document Date: 2026-08-22
+
+Invoice total: INR 275,000. The purchase order value in the ERP register is INR 250,000.
+Finance review is required before the balance is approved.

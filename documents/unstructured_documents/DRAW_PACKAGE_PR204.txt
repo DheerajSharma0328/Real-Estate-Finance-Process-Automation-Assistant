@@ -1,0 +1,8 @@
+Document ID: DOC-DRAW-PR204
+Project ID: PR204
+Property ID: P204
+Document Type: Draw Package
+Document Date: 2026-09-04
+
+The September project draw package includes supporting cost schedules for CC101, CC202, CC303 and CC404.
+Invoices should be reconciled to approved purchase orders before inclusion in the payment run.

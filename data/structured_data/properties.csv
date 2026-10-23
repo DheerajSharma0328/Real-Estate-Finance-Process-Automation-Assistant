@@ -1,0 +1,4 @@
+property_id,property_name,city,property_type,project_id,status
+P204,Cedar Heights,Delhi,Residential Tower,PR204,Active
+P205,Riverside Plaza,Gurugram,Commercial,PR205,Active
+P206,Lakeview Residences,Noida,Residential,PR206,On Hold

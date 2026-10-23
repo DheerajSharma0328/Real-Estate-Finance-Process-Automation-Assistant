@@ -1,0 +1,14 @@
+Document ID: DOC-PROC-001
+Document Type: Finance Procedure
+Document Date: 2026-07-01
+Source: Finance Operations
+
+Invoice approval procedure:
+1. Confirm vendor and project.
+2. Match invoice to purchase order.
+3. Confirm cost code and budget availability.
+4. Check required approval/supporting documents.
+5. Record payment status.
+6. Escalate mismatches rather than approving automatically.
+
+A mismatch between invoice and PO requires review and supporting evidence.

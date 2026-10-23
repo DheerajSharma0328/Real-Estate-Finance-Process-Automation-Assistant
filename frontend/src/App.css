@@ -1,0 +1,166 @@
+
+#root {
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f4f6f9;
+  color: #172033;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.header h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.header p {
+  margin: 0;
+  color: #667085;
+}
+
+.status {
+  background: #dcfae6;
+  color: #067647;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.section-title {
+  margin: 0 0 16px;
+  font-size: 20px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  padding: 24px;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgb(16 24 40 / 4%);
+}
+
+.card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.card p {
+  min-height: 40px;
+  margin: 0 0 20px;
+  color: #667085;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.card label {
+  display: block;
+  margin: 14px 0 6px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.card input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 7px;
+  outline: none;
+}
+
+.card input:focus {
+  border-color: #315efb;
+  box-shadow: 0 0 0 3px rgb(49 94 251 / 12%);
+}
+
+.card button {
+  width: 100%;
+  margin-top: 18px;
+  padding: 12px;
+  border: none;
+  border-radius: 7px;
+  background: #315efb;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.card button:hover {
+  background: #2448cf;
+}
+
+.results {
+  margin-top: 28px;
+  padding: 24px;
+  background: white;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+}
+
+.results pre {
+  overflow-x: auto;
+  padding: 16px;
+  border-radius: 8px;
+  background: #101828;
+  color: #d1fadf;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.placeholder {
+  color: #667085;
+  font-size: 14px;
+}
+
+@media (max-width: 850px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 20px 14px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+}

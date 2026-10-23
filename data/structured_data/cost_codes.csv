@@ -1,0 +1,5 @@
+cost_code,cost_category,description,budget_owner
+CC101,Civil & Concrete,"Concrete, cement and civil material",Project Manager
+CC202,Electrical,Electrical cabling and related works,MEP Manager
+CC303,HVAC,HVAC supply and installation,MEP Manager
+CC404,Interior Finishes,Flooring and finish materials,Design Manager

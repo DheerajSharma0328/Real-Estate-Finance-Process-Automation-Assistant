@@ -1,0 +1,13 @@
+Document ID: DOC-CHECK-PR204
+Project ID: PR204
+Property ID: P204
+Document Type: Finance Checklist
+Document Date: 2026-09-08
+
+For an invoice to proceed to payment:
+- Invoice is present and readable.
+- Approved PO exists.
+- Invoice amount agrees with PO or an approved variance exists.
+- Required contract/approval documents are present where applicable.
+- Vendor documentation is current.
+- Cost code is valid.

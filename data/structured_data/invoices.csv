@@ -1,0 +1,9 @@
+invoice_id,property_id,project_id,vendor_id,po_id,invoice_date,due_date,cost_code,description,invoice_amount,paid_amount,status
+INV5001,P204,PR204,V301,PO7001,2026-08-20,2026-09-19,CC101,Cement and concrete supplies,485000,0,Unpaid
+INV5002,P204,PR204,V302,PO7002,2026-08-22,2026-09-21,CC202,Electrical cabling,275000,125000,Partially Paid
+INV5003,P204,PR204,V303,PO7003,2026-08-25,2026-09-24,CC303,HVAC installation advance,420000,0,Unpaid
+INV5004,P204,PR204,V304,PO7004,2026-08-28,2026-09-27,CC404,Flooring materials,190000,0,On Hold
+INV5005,P205,PR205,V305,PO7005,2026-08-29,2026-09-28,CC101,Civil works,350000,350000,Paid
+INV5006,P205,PR205,V301,PO7006,2026-09-01,2026-10-01,CC101,Concrete supplies,210000,0,Unpaid
+INV5007,P206,PR206,V304,PO7007,2026-08-15,2026-09-14,CC404,Flooring materials,145000,0,On Hold
+INV5008,P204,PR204,V301,PO7008,2026-09-03,2026-10-03,CC101,Concrete supplies - additional delivery,160000,0,Unpaid
