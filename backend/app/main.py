@@ -1,3 +1,10 @@
+
+from typing import Literal
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+
 from app.inspect_invoices import (
     analyze_budget,
     calculate_outstanding_balance,
@@ -5,21 +12,30 @@ from app.inspect_invoices import (
     reconcile_invoice_payments,
 )
 
-from typing import Literal
-
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
-app = FastAPI(title="Real Estate Finance Assistant", version="0.1.0")
-from fastapi.middleware.cors import CORSMiddleware
+from app.finance_queries import (
+    get_invoice_outstanding_balances,
+    get_invoice_purchase_order_comparison,
+)
 
 
+app = FastAPI(
+    title="Real Estate Finance Assistant",
+    version="0.2.0",
+)
+
+
+# Allow the local React frontend to communicate with this API.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=False,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1000)
@@ -33,10 +49,22 @@ class AskResponse(BaseModel):
     trace: dict[str, str]
 
 
+# ------------------------------------------------------------
+# Health check
+# ------------------------------------------------------------
+
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "version": "0.1.0"}
+    return {
+        "status": "ok",
+        "version": "0.2.0",
+    }
 
+
+# ------------------------------------------------------------
+# Existing invoice endpoints (Day 1)
+# These continue to use the existing CSV-based functions.
+# ------------------------------------------------------------
 
 @app.get("/invoices/{invoice_id}/comparison")
 def get_invoice_comparison(invoice_id: str):
@@ -49,7 +77,6 @@ def get_invoice_comparison(invoice_id: str):
         )
 
     return comparison
-
 
 
 @app.get("/invoices/{invoice_id}/outstanding")
@@ -77,6 +104,7 @@ def get_invoice_payment_reconciliation(invoice_id: str):
 
     return reconciliation
 
+
 @app.get("/projects/{project_id}/budget/{cost_code}")
 def get_project_budget(project_id: str, cost_code: str):
     budget = analyze_budget(project_id, cost_code)
@@ -88,6 +116,38 @@ def get_project_budget(project_id: str, cost_code: str):
         )
 
     return budget
+
+
+# ------------------------------------------------------------
+# New PostgreSQL endpoints (Day 2)
+# These use the structured PostgreSQL database.
+# ------------------------------------------------------------
+
+@app.get("/api/invoices/outstanding")
+def list_invoice_outstanding_balances():
+    try:
+        return get_invoice_outstanding_balances()
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to retrieve invoice balances from the database.",
+        )
+
+
+@app.get("/api/invoices/po-comparison")
+def list_invoice_purchase_order_comparisons():
+    try:
+        return get_invoice_purchase_order_comparison()
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to compare invoices with purchase orders.",
+        )
+
+
+# ------------------------------------------------------------
+# Existing question endpoint
+# ------------------------------------------------------------
 
 @app.post("/ask", response_model=AskResponse)
 def ask_question(request: AskRequest):

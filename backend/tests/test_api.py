@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-
+from unittest.mock import patch
 from app.main import app
 
 
@@ -131,3 +131,48 @@ def test_project_budget_endpoint_unknown_record():
     response = client.get("/projects/PR9999/budget/CC999")
 
     assert response.status_code == 404
+
+
+
+def test_postgres_invoice_outstanding_endpoint():
+    sample_data = [
+        {
+            "invoice_id": "INV5002",
+            "invoice_amount": 275000.0,
+            "paid_amount": 125000.0,
+            "outstanding_balance": 150000.0,
+            "status": "Partially Paid",
+        }
+    ]
+
+    with patch(
+        "app.main.get_invoice_outstanding_balances",
+        return_value=sample_data,
+    ):
+        response = client.get("/api/invoices/outstanding")
+
+    assert response.status_code == 200
+    assert response.json() == sample_data
+
+
+def test_postgres_invoice_po_comparison_endpoint():
+    sample_data = [
+        {
+            "invoice_id": "INV5001",
+            "vendor_id": "V301",
+            "po_id": "PO7001",
+            "invoice_amount": 485000.0,
+            "po_total": 450000.0,
+            "variance": 35000.0,
+            "comparison_result": "Invoice exceeds PO",
+        }
+    ]
+
+    with patch(
+        "app.main.get_invoice_purchase_order_comparison",
+        return_value=sample_data,
+    ):
+        response = client.get("/api/invoices/po-comparison")
+
+    assert response.status_code == 200
+    assert response.json() == sample_data
