@@ -1,12 +1,24 @@
+
 import { useState } from 'react'
 import './App.css'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
 function App() {
+  // State for existing financial operations.
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
 
+  // State for Day 3 document search.
+  const [documentQuery, setDocumentQuery] = useState(
+    'Why is invoice INV5004 on hold?'
+  )
+  const [projectId, setProjectId] = useState('PR204')
+  const [documentResults, setDocumentResults] = useState(null)
+  const [documentLoading, setDocumentLoading] = useState(false)
+  const [documentError, setDocumentError] = useState('')
+
+  // Fetch results from existing financial endpoints.
   async function fetchResult(url) {
     setLoading(true)
     setResult(null)
@@ -16,37 +28,102 @@ function App() {
       const data = await response.json()
 
       if (!response.ok) {
-        setResult({ error: data.detail || 'Request failed.' })
+        setResult({
+          error:
+            typeof data.detail === 'string'
+              ? data.detail
+              : 'Request failed.',
+        })
         return
       }
 
       setResult(data)
     } catch {
-      setResult({ error: 'Could not connect to the backend.' })
+      setResult({
+        error: 'Could not connect to the backend.',
+      })
     } finally {
       setLoading(false)
     }
   }
 
+  // Handle individual invoice operations.
+  async function fetchInvoiceOperation(inputId, operation) {
+    const input = document.getElementById(inputId)
+    const invoiceId = input ? input.value.trim() : ''
 
-async function fetchInvoiceOperation(inputId, operation) {
-  const invoiceId = document.getElementById(inputId).value.trim()
+    if (!invoiceId) {
+      setResult({ error: 'Please enter an invoice ID.' })
+      return
+    }
 
-  if (!invoiceId) {
-    setResult({ error: 'Please enter an invoice ID.' })
-    return
+    const routes = {
+      comparison: `/invoices/${encodeURIComponent(invoiceId)}/comparison`,
+      outstanding: `/invoices/${encodeURIComponent(invoiceId)}/outstanding`,
+      reconciliation: `/invoices/${encodeURIComponent(invoiceId)}/reconciliation`,
+    }
+
+    await fetchResult(routes[operation])
   }
 
-  const routes = {
-    comparison: `/invoices/${encodeURIComponent(invoiceId)}/comparison`,
-    outstanding: `/invoices/${encodeURIComponent(invoiceId)}/outstanding`,
-    reconciliation: `/invoices/${encodeURIComponent(invoiceId)}/reconciliation`,
+  // Search documents using the Day 3 semantic-search API.
+  async function searchDocuments(event) {
+    event.preventDefault()
+
+    if (!documentQuery.trim()) {
+      setDocumentError('Please enter a question.')
+      setDocumentResults(null)
+      return
+    }
+
+    if (documentQuery.trim().length > 1000) {
+      setDocumentError('Your question must be 1000 characters or fewer.')
+      setDocumentResults(null)
+      return
+    }
+
+    setDocumentLoading(true)
+    setDocumentError('')
+    setDocumentResults(null)
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/documents/search`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: documentQuery.trim(),
+            project_id: projectId.trim() || null,
+            top_k: 3,
+          }),
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setDocumentError(
+          typeof data.detail === 'string'
+            ? data.detail
+            : 'Document search failed.'
+        )
+        return
+      }
+
+      setDocumentResults(data)
+    } catch {
+      setDocumentError(
+        'Could not connect to the backend. Check that FastAPI is running.'
+      )
+    } finally {
+      setDocumentLoading(false)
+    }
   }
 
-  await fetchResult(routes[operation])
-}
-
-
+  // Display results from existing financial operations.
   function renderResults() {
     if (loading) {
       return <p className="placeholder">Loading data...</p>
@@ -86,6 +163,7 @@ async function fetchInvoiceOperation(inputId, operation) {
                 <th>Status</th>
               </tr>
             </thead>
+
             <tbody>
               {result.map((invoice) => (
                 <tr key={invoice.invoice_id}>
@@ -102,7 +180,7 @@ async function fetchInvoiceOperation(inputId, operation) {
       )
     }
 
-    // Display PostgreSQL invoice-to-PO comparisons in a table.
+    // Display PostgreSQL invoice-to-purchase-order comparisons.
     if (
       Array.isArray(result) &&
       result.length > 0 &&
@@ -122,6 +200,7 @@ async function fetchInvoiceOperation(inputId, operation) {
                 <th>Result</th>
               </tr>
             </thead>
+
             <tbody>
               {result.map((invoice) => (
                 <tr key={invoice.invoice_id}>
@@ -150,7 +229,7 @@ async function fetchInvoiceOperation(inputId, operation) {
       )
     }
 
-    // Preserve a readable display for the existing single-invoice endpoints.
+    // Keep other existing API responses readable.
     return <pre>{JSON.stringify(result, null, 2)}</pre>
   }
 
@@ -162,9 +241,10 @@ async function fetchInvoiceOperation(inputId, operation) {
           <p>Monitor invoices, payments, and project budgets.</p>
         </div>
 
-        <span className="status">Finance Dashboard · V0.2</span>
+        <span className="status">Finance Dashboard · V0.3</span>
       </header>
 
+      {/* Existing Day 1 and Day 2 financial operations. */}
       <section>
         <h2 className="section-title">Financial Operations</h2>
 
@@ -183,7 +263,9 @@ async function fetchInvoiceOperation(inputId, operation) {
             <button
               type="button"
               disabled={loading}
-              onClick={() =>fetchInvoiceOperation('comparison-invoice', 'comparison')}
+              onClick={() =>
+                fetchInvoiceOperation('comparison-invoice', 'comparison')
+              }
             >
               Compare Invoice
             </button>
@@ -203,7 +285,9 @@ async function fetchInvoiceOperation(inputId, operation) {
             <button
               type="button"
               disabled={loading}
-              onClick={() => fetchInvoiceOperation('outstanding-invoice', 'outstanding')}
+              onClick={() =>
+                fetchInvoiceOperation('outstanding-invoice', 'outstanding')
+              }
             >
               Check Balance
             </button>
@@ -223,7 +307,12 @@ async function fetchInvoiceOperation(inputId, operation) {
             <button
               type="button"
               disabled={loading}
-              onClick={() =>fetchInvoiceOperation('reconciliation-invoice', 'reconciliation')}
+              onClick={() =>
+                fetchInvoiceOperation(
+                  'reconciliation-invoice',
+                  'reconciliation'
+                )
+              }
             >
               Reconcile Payments
             </button>
@@ -257,6 +346,136 @@ async function fetchInvoiceOperation(inputId, operation) {
         </div>
       </section>
 
+      {/* New Day 3 document search section. */}
+      <section className="document-search">
+        <h2 className="section-title">Document Search</h2>
+
+        <p className="document-description">
+          Search project documents by meaning and inspect the supporting
+          evidence returned by the document retrieval system.
+        </p>
+
+        <form
+          onSubmit={searchDocuments}
+          className="document-search-form"
+        >
+          <label htmlFor="document-query">Your question</label>
+
+          <textarea
+            id="document-query"
+            value={documentQuery}
+            onChange={(event) => setDocumentQuery(event.target.value)}
+            placeholder="e.g. Why is invoice INV5004 on hold?"
+            maxLength={1000}
+            rows={3}
+            required
+          />
+
+          <label htmlFor="document-project">Project ID</label>
+
+          <input
+            id="document-project"
+            type="text"
+            value={projectId}
+            onChange={(event) => setProjectId(event.target.value)}
+            placeholder="e.g. PR204"
+          />
+
+          <button type="submit" disabled={documentLoading}>
+            {documentLoading ? 'Searching documents...' : 'Search Documents'}
+          </button>
+        </form>
+
+        {documentError && (
+          <p className="error-message" role="alert">
+            {documentError}
+          </p>
+        )}
+
+        {documentResults && (
+
+<div className="document-search-results">
+  <h3>Evidence Found: {documentResults.result_count}</h3>
+
+  {documentResults.answer && (
+    <article className="grounded-answer">
+      <h3>Grounded Answer</h3>
+      <p>{documentResults.answer}</p>
+
+      {documentResults.status === 'no_evidence' && (
+        <p className="placeholder">
+          No sufficiently relevant evidence was found.
+        </p>
+      )}
+    </article>
+  )}
+
+  {documentResults.sources?.length > 0 && (
+    <section className="answer-sources">
+      <h3>Sources Supporting This Answer</h3>
+
+      {documentResults.sources.map((source) => (
+        <article
+          className="source-card"
+          key={source.chunk_id}
+        >
+          <h4>{source.source}</h4>
+
+          <p>
+            Project: {source.project_id || 'Not specified'}
+            {' · '}
+            Invoice: {source.invoice_id || 'Not specified'}
+          </p>
+
+          <p>
+            Chunk ID: {source.chunk_id}
+            {' · '}
+            Similarity:{' '}
+            {Number(source.similarity_score).toFixed(3)}
+          </p>
+        </article>
+      ))}
+    </section>
+  )}
+
+  {documentResults.results.length === 0 ? (
+    <p className="placeholder">
+      No matching documents were found for this project.
+    </p>
+  ) : (
+    <>
+      <h3>Retrieved Evidence</h3>
+
+      {documentResults.results.map((item) => (
+        <article className="evidence-card" key={item.chunk_id}>
+          <div className="evidence-heading">
+            <h4>{item.source}</h4>
+
+            <span className="similarity-score">
+              Similarity:{' '}
+              {Number(item.similarity_score).toFixed(3)}
+            </span>
+          </div>
+
+          <p className="evidence-text">{item.text}</p>
+
+          <p className="evidence-metadata">
+            Project: {item.metadata.project_id || 'Not specified'}
+            {' · '}
+            Invoice: {item.metadata.invoice_id || 'Not specified'}
+            {' · '}
+            Chunk: {item.metadata.chunk_number ?? 'Not specified'}
+          </p>
+        </article>
+      ))}
+    </>
+  )}
+</div>
+
+        )}
+      </section>
+
+      {/* Existing results panel for financial operations. */}
       <section className="results">
         <h2 className="section-title">Results</h2>
         {renderResults()}

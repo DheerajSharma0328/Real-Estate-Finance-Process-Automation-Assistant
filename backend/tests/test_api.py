@@ -176,3 +176,25 @@ def test_postgres_invoice_po_comparison_endpoint():
 
     assert response.status_code == 200
     assert response.json() == sample_data
+
+
+def test_document_search_unknown_project_returns_no_evidence():
+    with patch("app.main.search_documents", return_value=[]):
+        response = client.post(
+            "/api/documents/search",
+            json={
+                "query": "Why is this invoice on hold?",
+                "project_id": "PR999",
+                "top_k": 3,
+            },
+        )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "no_evidence"
+    assert data["result_count"] == 0
+    assert data["results"] == []
+    assert data["sources"] == []
+    assert "could not find supporting evidence" in data["answer"].lower()

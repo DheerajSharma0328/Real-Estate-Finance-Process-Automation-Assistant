@@ -1,6 +1,6 @@
-
+from app.document_search import search_documents
 from typing import Literal
-
+from app.document_answer import generate_grounded_answer
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -48,6 +48,10 @@ class AskResponse(BaseModel):
     evidence: list[dict[str, str]]
     trace: dict[str, str]
 
+class DocumentSearchRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=1000)
+    project_id: str | None = None
+    top_k: int = Field(default=3, ge=1, le=10)
 
 # ------------------------------------------------------------
 # Health check
@@ -173,3 +177,51 @@ def ask_question(request: AskRequest):
             "validation": "passed",
         },
     )
+
+# ------------------------------------------------------------
+# Document search endpoint (Day 3)
+# ------------------------------------------------------------
+
+
+@app.post("/api/documents/search")
+def document_search_endpoint(request: DocumentSearchRequest):
+    query = request.query.strip()
+
+    if not query:
+        raise HTTPException(
+            status_code=422,
+            detail="Search query cannot contain only whitespace.",
+        )
+
+    try:
+        results = search_documents(
+            query=query,
+            top_k=request.top_k,
+            project_id=request.project_id,
+        )
+
+        answer_result = generate_grounded_answer(
+            query=query,
+            results=results,
+        )
+
+        return {
+            "query": query,
+            "answer": answer_result["answer"],
+            "status": answer_result["status"],
+            "sources": answer_result["sources"],
+            "results": results,
+            "result_count": len(results),
+        }
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=422,
+            detail=str(error),
+        ) from error
+    except Exception as error:
+        print(f"Document search failed: {error}")
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to search documents.",
+        ) from error
