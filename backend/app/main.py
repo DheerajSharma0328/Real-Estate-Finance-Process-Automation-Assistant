@@ -4,6 +4,7 @@ from app.document_answer import generate_grounded_answer
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from app.property_evidence import get_property_finance_record
 
 from app.inspect_invoices import (
     analyze_budget,
@@ -224,4 +225,106 @@ def document_search_endpoint(request: DocumentSearchRequest):
         raise HTTPException(
             status_code=500,
             detail="Unable to search documents.",
+        ) from error
+
+
+class PropertyEvidenceRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=1000)
+    invoice_id: str | None = None
+    top_k: int = Field(default=3, ge=1, le=10)
+
+
+@app.post("/api/properties/{property_id}/evidence")
+def property_evidence_endpoint(
+    property_id: str,
+    request: PropertyEvidenceRequest,
+):
+    query = request.query.strip()
+
+    if not query:
+        raise HTTPException(
+            status_code=422,
+            detail="Search query cannot contain only whitespace.",
+        )
+
+    try:
+        finance_record = get_property_finance_record(property_id)
+
+        if finance_record is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Property {property_id} was not found.",
+            )
+
+        property_record = finance_record["property"]
+        project_id = property_record["project_id"]
+
+        invoices = finance_record["invoices"]
+
+        if request.invoice_id:
+            invoices = [
+                invoice
+                for invoice in invoices
+                if invoice["invoice_id"] == request.invoice_id
+            ]
+
+            if not invoices:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        f"Invoice {request.invoice_id} was not found "
+                        f"for property {property_id}."
+                    ),
+                )
+
+        results = search_documents(
+            query=query,
+            top_k=request.top_k,
+            project_id=project_id,
+            property_id=property_id,
+        )
+
+        # Validate identifiers again before accepting evidence.
+        verified_results = [
+            result
+            for result in results
+            if (
+                result["metadata"].get("property_id") == property_id
+                and result["metadata"].get("project_id") == project_id
+                and (
+                    request.invoice_id is None
+                    or result["metadata"].get("invoice_id") == request.invoice_id
+                    or result["metadata"].get("invoice_id") is None
+                )
+            )
+        ]
+
+        answer_result = generate_grounded_answer(
+            query=query,
+            results=verified_results,
+        )
+
+        return {
+            "property": property_record,
+            "invoices": invoices,
+            "query": query,
+            "answer": answer_result["answer"],
+            "status": answer_result["status"],
+            "sources": answer_result["sources"],
+            "results": verified_results,
+            "result_count": len(verified_results),
+        }
+
+    except HTTPException:
+        raise
+    except ValueError as error:
+        raise HTTPException(
+            status_code=422,
+            detail=str(error),
+        ) from error
+    except Exception as error:
+        print(f"Property evidence search failed: {error}")
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to retrieve property evidence.",
         ) from error

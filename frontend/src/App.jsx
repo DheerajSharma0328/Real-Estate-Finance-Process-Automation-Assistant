@@ -17,6 +17,15 @@ function App() {
   const [documentResults, setDocumentResults] = useState(null)
   const [documentLoading, setDocumentLoading] = useState(false)
   const [documentError, setDocumentError] = useState('')
+  // Day 4: property-linked financial evidence.
+  const [evidencePropertyId, setEvidencePropertyId] = useState('P204')
+  const [evidenceInvoiceId, setEvidenceInvoiceId] = useState('INV5004')
+  const [evidenceQuery, setEvidenceQuery] = useState(
+    'Why is invoice INV5004 on hold?'
+  )
+  const [propertyEvidence, setPropertyEvidence] = useState(null)
+  const [propertyEvidenceLoading, setPropertyEvidenceLoading] = useState(false)
+  const [propertyEvidenceError, setPropertyEvidenceError] = useState('')
 
   // Fetch results from existing financial endpoints.
   async function fetchResult(url) {
@@ -122,6 +131,52 @@ function App() {
       setDocumentLoading(false)
     }
   }
+
+  async function searchPropertyEvidence(event) {
+  event.preventDefault()
+
+  setPropertyEvidenceLoading(true)
+  setPropertyEvidenceError('')
+  setPropertyEvidence(null)
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/properties/${encodeURIComponent(
+        evidencePropertyId.trim()
+      )}/evidence`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: evidenceQuery.trim(),
+          invoice_id: evidenceInvoiceId.trim() || null,
+          top_k: 3,
+        }),
+      }
+    )
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      setPropertyEvidenceError(
+        typeof data.detail === 'string'
+          ? data.detail
+          : 'Property evidence search failed.'
+      )
+      return
+    }
+
+    setPropertyEvidence(data)
+  } catch {
+    setPropertyEvidenceError(
+      'Could not connect to the backend. Check that FastAPI is running.'
+    )
+  } finally {
+    setPropertyEvidenceLoading(false)
+  }
+}
 
   // Display results from existing financial operations.
   function renderResults() {
@@ -473,6 +528,158 @@ function App() {
 </div>
 
         )}
+
+      {/* Day 4: connect property records to document evidence. */}
+      <section className="document-search">
+        <h2 className="section-title">Property Evidence</h2>
+
+        <p className="document-description">
+          Combine PostgreSQL property and invoice records with
+          document evidence verified against property and project IDs.
+        </p>
+
+        <form
+          className="document-search-form"
+          onSubmit={searchPropertyEvidence}
+        >
+          <label htmlFor="evidence-property-id">Property ID</label>
+          <input
+            id="evidence-property-id"
+            value={evidencePropertyId}
+            onChange={(event) => setEvidencePropertyId(event.target.value)}
+            placeholder="e.g. P204"
+            required
+          />
+
+          <label htmlFor="evidence-invoice-id">
+            Invoice ID (optional)
+          </label>
+          <input
+            id="evidence-invoice-id"
+            value={evidenceInvoiceId}
+            onChange={(event) => setEvidenceInvoiceId(event.target.value)}
+            placeholder="e.g. INV5004"
+          />
+
+          <label htmlFor="evidence-query">Your question</label>
+          <textarea
+            id="evidence-query"
+            value={evidenceQuery}
+            onChange={(event) => setEvidenceQuery(event.target.value)}
+            rows={3}
+            maxLength={1000}
+            required
+          />
+
+          <button type="submit" disabled={propertyEvidenceLoading}>
+            {propertyEvidenceLoading
+              ? 'Retrieving evidence...'
+              : 'Find Property Evidence'}
+          </button>
+        </form>
+
+        {propertyEvidenceError && (
+          <p className="error-message" role="alert">
+            {propertyEvidenceError}
+          </p>
+        )}
+
+        {propertyEvidence && (
+          <div className="document-search-results">
+            <article className="grounded-answer">
+              <h3>Property</h3>
+              <p>
+                <strong>{propertyEvidence.property.property_name}</strong>
+                {' · '}
+                Property ID: {propertyEvidence.property.property_id}
+                {' · '}
+                Project ID: {propertyEvidence.property.project_id}
+              </p>
+              <p>
+                {propertyEvidence.property.city}
+                {' · '}
+                Status: {propertyEvidence.property.status}
+              </p>
+
+              <h3>Evidence-Based Answer</h3>
+              <p>{propertyEvidence.answer}</p>
+              <p>
+                Evidence status: {propertyEvidence.status}
+              </p>
+            </article>
+
+            <h3>Structured Financial Records</h3>
+            {propertyEvidence.invoices.length === 0 ? (
+              <p className="placeholder">No matching invoices found.</p>
+            ) : (
+              propertyEvidence.invoices.map((invoice) => (
+                <article className="evidence-card" key={invoice.invoice_id}>
+                  <h4>
+                    {invoice.invoice_id}
+                    {' · '}
+                    {invoice.status}
+                  </h4>
+                  <p>
+                    Property: {invoice.property_id}
+                    {' · '}
+                    Project: {invoice.project_id}
+                  </p>
+                  <p>
+                    Invoice amount: {formatAmount(invoice.invoice_amount)}
+                    {' · '}
+                    PO amount:{' '}
+                    {invoice.po_total == null
+                      ? 'Not available'
+                      : formatAmount(invoice.po_total)}
+                  </p>
+                  <p>
+                    Variance:{' '}
+                    {invoice.variance == null
+                      ? 'Not available'
+                      : formatAmount(invoice.variance)}
+                  </p>
+                </article>
+              ))
+            )}
+
+            <h3>Verified Document Sources</h3>
+            {propertyEvidence.sources.length === 0 ? (
+              <p className="placeholder">
+                No sufficiently relevant supporting evidence was found.
+              </p>
+            ) : (
+              propertyEvidence.sources.map((source) => (
+                <article className="source-card" key={source.chunk_id}>
+                  <h4>{source.source}</h4>
+                  <p>
+                    Property: {source.property_id || 'Not specified'}
+                    {' · '}
+                    Project: {source.project_id || 'Not specified'}
+                    {' · '}
+                    Invoice: {source.invoice_id || 'Not specified'}
+                  </p>
+                </article>
+              ))
+            )}
+
+            <h3>Retrieved Evidence Passages</h3>
+            {propertyEvidence.results.map((item) => (
+              <article className="evidence-card" key={item.chunk_id}>
+                <h4>{item.source}</h4>
+                <p className="evidence-text">{item.text}</p>
+                <p className="evidence-metadata">
+                  Property: {item.metadata.property_id || 'Not specified'}
+                  {' · '}
+                  Project: {item.metadata.project_id || 'Not specified'}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+
+
       </section>
 
       {/* Existing results panel for financial operations. */}

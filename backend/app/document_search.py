@@ -13,6 +13,7 @@ def search_documents(
     query: str,
     top_k: int = 3,
     project_id: str | None = None,
+    property_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """
     Find document chunks that are semantically similar to a question.
@@ -32,12 +33,20 @@ def search_documents(
     chunks = chunk_all_documents()
 
     # 2. Apply the project filter before searching.
+    # 2. Apply business-identifier filters before semantic search.
     if project_id is not None:
         chunks = [
             chunk
             for chunk in chunks
             if chunk["metadata"].get("project_id") == project_id
-        ]
+    ]
+
+    if property_id is not None:
+        chunks = [
+            chunk
+            for chunk in chunks
+            if chunk["metadata"].get("property_id") == property_id
+    ]
 
     if not chunks:
         return []

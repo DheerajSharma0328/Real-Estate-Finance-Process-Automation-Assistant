@@ -198,3 +198,163 @@ def test_document_search_unknown_project_returns_no_evidence():
     assert data["results"] == []
     assert data["sources"] == []
     assert "could not find supporting evidence" in data["answer"].lower()
+
+
+def test_property_evidence_endpoint_success():
+    property_record = {
+        "property_id": "P204",
+        "property_name": "Cedar Heights",
+        "city": "Delhi",
+        "property_type": "Residential Tower",
+        "project_id": "PR204",
+        "status": "Active",
+    }
+
+    invoice = {
+        "invoice_id": "INV5004",
+        "property_id": "P204",
+        "project_id": "PR204",
+        "po_id": "PO7004",
+        "invoice_amount": 190000.0,
+        "paid_amount": 0.0,
+        "status": "On Hold",
+        "po_total": 180000.0,
+        "variance": 10000.0,
+    }
+
+    search_results = [
+        {
+            "chunk_id": "DOC-DISPUTE-5004_chunk_1",
+            "text": (
+                "Invoice INV5004 is on hold. The invoice amount is "
+                "INR 190,000 while PO7004 is INR 180,000. "
+                "A revised invoice or written approval is required."
+            ),
+            "source": "INV5004_Dispute_Note.txt",
+            "metadata": {
+                "property_id": "P204",
+                "project_id": "PR204",
+                "invoice_id": "INV5004",
+            },
+            "similarity_score": 0.764,
+        }
+    ]
+
+    with (
+        patch(
+            "app.main.get_property_finance_record",
+            return_value={
+                "property": property_record,
+                "invoices": [invoice],
+            },
+        ),
+        patch(
+            "app.main.search_documents",
+            return_value=search_results,
+        ),
+    ):
+        response = client.post(
+            "/api/properties/P204/evidence",
+            json={
+                "query": "Why is invoice INV5004 on hold?",
+                "invoice_id": "INV5004",
+                "top_k": 3,
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["property"]["property_id"] == "P204"
+    assert len(data["invoices"]) == 1
+    assert data["invoices"][0]["invoice_id"] == "INV5004"
+    assert data["invoices"][0]["variance"] == 10000.0
+    assert data["sources"][0]["source"] == "INV5004_Dispute_Note.txt"
+    assert data["sources"][0]["property_id"] == "P204"
+
+
+def test_property_evidence_unknown_property():
+    with patch(
+        "app.main.get_property_finance_record",
+        return_value=None,
+    ):
+        response = client.post(
+            "/api/properties/P999/evidence",
+            json={"query": "Find supporting evidence"},
+        )
+
+    assert response.status_code == 404
+    assert "Property P999 was not found" in response.json()["detail"]
+
+
+def test_property_evidence_rejects_invoice_from_another_property():
+    with patch(
+        "app.main.get_property_finance_record",
+        return_value={
+            "property": {
+                "property_id": "P205",
+                "property_name": "Riverside Plaza",
+                "city": "Gurugram",
+                "property_type": "Commercial",
+                "project_id": "PR205",
+                "status": "Active",
+            },
+            "invoices": [],
+        },
+    ):
+        response = client.post(
+            "/api/properties/P205/evidence",
+            json={
+                "query": "Why is invoice INV5001 on hold?",
+                "invoice_id": "INV5001",
+            },
+        )
+
+    assert response.status_code == 404
+    assert "INV5001" in response.json()["detail"]
+    assert "P205" in response.json()["detail"]
+
+
+def test_property_evidence_rejects_document_with_mismatched_property():
+    with (
+        patch(
+            "app.main.get_property_finance_record",
+            return_value={
+                "property": {
+                    "property_id": "P204",
+                    "property_name": "Cedar Heights",
+                    "city": "Delhi",
+                    "property_type": "Residential Tower",
+                    "project_id": "PR204",
+                    "status": "Active",
+                },
+                "invoices": [],
+            },
+        ),
+        patch(
+            "app.main.search_documents",
+            return_value=[
+                {
+                    "chunk_id": "wrong_chunk",
+                    "text": "Unrelated property evidence.",
+                    "source": "UNRELATED_INVOICE_P206.txt",
+                    "metadata": {
+                        "property_id": "P206",
+                        "project_id": "PR206",
+                        "invoice_id": "INV9999",
+                    },
+                    "similarity_score": 0.9,
+                }
+            ],
+        ),
+    ):
+        response = client.post(
+            "/api/properties/P204/evidence",
+            json={"query": "Find evidence", "top_k": 3},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["result_count"] == 0
+    assert data["results"] == []
+    assert data["sources"] == []
+    assert data["status"] == "no_evidence"

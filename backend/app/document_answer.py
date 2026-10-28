@@ -70,15 +70,16 @@ def generate_grounded_answer(
     )
 
     sources = [
-        {
-            "source": result["source"],
-            "chunk_id": result["chunk_id"],
-            "similarity_score": result["similarity_score"],
-            "project_id": result["metadata"].get("project_id"),
-            "invoice_id": result["metadata"].get("invoice_id"),
-        }
-        for result in selected_results
-    ]
+    {
+        "source": result["source"],
+        "chunk_id": result["chunk_id"],
+        "similarity_score": result["similarity_score"],
+        "project_id": result["metadata"].get("project_id"),
+        "property_id": result["metadata"].get("property_id"),
+        "invoice_id": result["metadata"].get("invoice_id"),
+    }
+    for result in selected_results
+]
 
     return {
         "answer": answer,
