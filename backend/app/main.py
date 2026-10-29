@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from app.property_evidence import get_property_finance_record
+from app.graph_queries import get_invoice_relationship_path
 
 from app.inspect_invoices import (
     analyze_budget,
@@ -327,4 +328,57 @@ def property_evidence_endpoint(
         raise HTTPException(
             status_code=500,
             detail="Unable to retrieve property evidence.",
+        ) from error
+
+# ------------------------------------------------------------
+# Day 5: Neo4j relationship traversal
+# ------------------------------------------------------------
+
+@app.get("/api/invoices/{invoice_id}/relationship-path")
+def invoice_relationship_path_endpoint(invoice_id: str):
+    try:
+        result = get_invoice_relationship_path(invoice_id)
+
+        if result is None:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"No complete graph relationship path found "
+                    f"for invoice {invoice_id}."
+                ),
+            )
+
+        return {
+            "status": "success",
+            "invoice_id": invoice_id,
+            "relationship_path": result["relationship_path"],
+            "entities": {
+                "property": {
+                    "property_id": result["property_id"],
+                    "property_name": result["property_name"],
+                },
+                "invoice": {
+                    "invoice_id": result["invoice_id"],
+                    "project_id": result["project_id"],
+                    "invoice_amount": result["invoice_amount"],
+                    "status": result["invoice_status"],
+                },
+                "purchase_order": {
+                    "po_id": result["po_id"],
+                    "po_total": result["po_total"],
+                },
+                "vendor": {
+                    "vendor_id": result["vendor_id"],
+                    "vendor_name": result["vendor_name"],
+                },
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as error:
+        print(f"Graph relationship query failed: {error}")
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to retrieve the graph relationship path.",
         ) from error

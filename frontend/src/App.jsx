@@ -27,6 +27,13 @@ function App() {
   const [propertyEvidenceLoading, setPropertyEvidenceLoading] = useState(false)
   const [propertyEvidenceError, setPropertyEvidenceError] = useState('')
 
+  // Day 5: Neo4j graph relationship explorer.
+  const [graphInvoiceId, setGraphInvoiceId] = useState('INV5004')
+  const [graphResult, setGraphResult] = useState(null)
+  const [graphLoading, setGraphLoading] = useState(false)
+  const [graphError, setGraphError] = useState('')
+
+
   // Fetch results from existing financial endpoints.
   async function fetchResult(url) {
     setLoading(true)
@@ -177,6 +184,50 @@ function App() {
     setPropertyEvidenceLoading(false)
   }
 }
+
+
+  // Day 5: Retrieve the relationship path from Neo4j through FastAPI.
+  async function searchGraphRelationships(event) {
+    event.preventDefault()
+
+    const invoiceId = graphInvoiceId.trim()
+
+    if (!invoiceId) {
+      setGraphError('Please enter an invoice ID.')
+      setGraphResult(null)
+      return
+    }
+
+    setGraphLoading(true)
+    setGraphError('')
+    setGraphResult(null)
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/invoices/${encodeURIComponent(invoiceId)}/relationship-path`
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setGraphError(
+          typeof data.detail === 'string'
+            ? data.detail
+            : 'Could not retrieve the relationship path.'
+        )
+        return
+      }
+
+      setGraphResult(data)
+    } catch {
+      setGraphError(
+        'Could not connect to the backend. Check that FastAPI and Neo4j are running.'
+      )
+    } finally {
+      setGraphLoading(false)
+    }
+  }
+
 
   // Display results from existing financial operations.
   function renderResults() {
@@ -681,6 +732,114 @@ function App() {
 
 
       </section>
+
+      {/* Day 5: Neo4j graph relationship explorer. */}
+      <section className="document-search">
+        <h2 className="section-title">Graph Relationship Explorer</h2>
+
+        <p className="document-description">
+          Explore how a property, invoice, purchase order, and vendor
+          are connected through the Neo4j relationship graph.
+        </p>
+
+        <form
+          className="document-search-form"
+          onSubmit={searchGraphRelationships}
+        >
+          <label htmlFor="graph-invoice-id">Invoice ID</label>
+
+          <input
+            id="graph-invoice-id"
+            value={graphInvoiceId}
+            onChange={(event) => setGraphInvoiceId(event.target.value)}
+            placeholder="e.g. INV5004"
+            required
+          />
+
+          <button type="submit" disabled={graphLoading}>
+            {graphLoading
+              ? 'Searching graph...'
+              : 'Explore Relationships'}
+          </button>
+        </form>
+
+        {graphError && (
+          <p className="error-message" role="alert">
+            {graphError}
+          </p>
+        )}
+
+        {graphResult && (
+          <div className="document-search-results">
+            <p className="result-success">
+              Relationship path found for {graphResult.invoice_id}
+            </p>
+
+            <div className="graph-path">
+              <article className="graph-node">
+                <span className="graph-node-type">PROPERTY</span>
+                <h3>{graphResult.entities.property.property_name}</h3>
+                <p>
+                  ID: {graphResult.entities.property.property_id}
+                </p>
+              </article>
+
+              <div className="graph-relationship">
+                <span>HAS_INVOICE</span>
+                <span className="graph-arrow">↓</span>
+              </div>
+
+              <article className="graph-node">
+                <span className="graph-node-type">INVOICE</span>
+                <h3>{graphResult.entities.invoice.invoice_id}</h3>
+                <p>
+                  Status: {graphResult.entities.invoice.status}
+                </p>
+                <p>
+                  Amount:{' '}
+                  {formatAmount(
+                    graphResult.entities.invoice.invoice_amount
+                  )}
+                </p>
+              </article>
+
+              <div className="graph-relationship">
+                <span>REFERENCES_PO</span>
+                <span className="graph-arrow">↓</span>
+              </div>
+
+              <article className="graph-node">
+                <span className="graph-node-type">PURCHASE ORDER</span>
+                <h3>{graphResult.entities.purchase_order.po_id}</h3>
+                <p>
+                  PO total:{' '}
+                  {formatAmount(
+                    graphResult.entities.purchase_order.po_total
+                  )}
+                </p>
+              </article>
+
+              <div className="graph-relationship">
+                <span>ISSUED_TO</span>
+                <span className="graph-arrow">↓</span>
+              </div>
+
+              <article className="graph-node">
+                <span className="graph-node-type">VENDOR</span>
+                <h3>{graphResult.entities.vendor.vendor_name}</h3>
+                <p>
+                  ID: {graphResult.entities.vendor.vendor_id}
+                </p>
+              </article>
+            </div>
+
+            <p className="evidence-metadata">
+              Path: {graphResult.relationship_path.join(' → ')}
+            </p>
+          </div>
+        )}
+      </section>
+
 
       {/* Existing results panel for financial operations. */}
       <section className="results">

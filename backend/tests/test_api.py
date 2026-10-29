@@ -358,3 +358,70 @@ def test_property_evidence_rejects_document_with_mismatched_property():
     assert data["results"] == []
     assert data["sources"] == []
     assert data["status"] == "no_evidence"
+
+
+def test_invoice_relationship_path_success():
+    sample_result = {
+        "property_id": "P204",
+        "property_name": "Cedar Heights",
+        "invoice_id": "INV5004",
+        "project_id": "PR204",
+        "invoice_amount": 190000,
+        "invoice_status": "On Hold",
+        "po_id": "PO7004",
+        "po_total": 180000,
+        "vendor_id": "V304",
+        "vendor_name": "Metro Finishes",
+        "relationship_path": [
+            "Property",
+            "Invoice",
+            "PurchaseOrder",
+            "Vendor",
+        ],
+    }
+
+    with patch(
+        "app.main.get_invoice_relationship_path",
+        return_value=sample_result,
+    ) as mock_graph_query:
+        response = client.get(
+            "/api/invoices/INV5004/relationship-path"
+        )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "success"
+    assert data["invoice_id"] == "INV5004"
+    assert data["relationship_path"] == [
+        "Property",
+        "Invoice",
+        "PurchaseOrder",
+        "Vendor",
+    ]
+    assert data["entities"]["property"]["property_id"] == "P204"
+    assert data["entities"]["property"]["property_name"] == "Cedar Heights"
+    assert data["entities"]["invoice"]["invoice_amount"] == 190000
+    assert data["entities"]["purchase_order"]["po_id"] == "PO7004"
+    assert data["entities"]["purchase_order"]["po_total"] == 180000
+    assert data["entities"]["vendor"]["vendor_id"] == "V304"
+    assert data["entities"]["vendor"]["vendor_name"] == "Metro Finishes"
+
+    mock_graph_query.assert_called_once_with("INV5004")
+
+
+def test_invoice_relationship_path_missing_invoice():
+    with patch(
+        "app.main.get_invoice_relationship_path",
+        return_value=None,
+    ):
+        response = client.get(
+            "/api/invoices/INV-NOT-FOUND/relationship-path"
+        )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == (
+        "No complete graph relationship path found "
+        "for invoice INV-NOT-FOUND."
+    )

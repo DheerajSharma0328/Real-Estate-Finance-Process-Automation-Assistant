@@ -403,3 +403,63 @@ select {
   font-size: 13px;
   color: #526078;
 }
+
+
+/* Day 5: Neo4j graph relationship explorer */
+.graph-path {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.graph-node {
+  padding: 18px;
+  background: #fcfcfd;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+}
+
+.graph-node-type {
+  color: #315efb;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.graph-node h3 {
+  margin: 8px 0;
+  font-size: 17px;
+}
+
+.graph-node p {
+  margin: 5px 0 0;
+  color: #667085;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.graph-relationship {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: #475467;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+.graph-arrow {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+@media (min-width: 700px) {
+  .graph-path {
+    max-width: 640px;
+    margin-right: auto;
+    margin-left: auto;
+  }
+}
